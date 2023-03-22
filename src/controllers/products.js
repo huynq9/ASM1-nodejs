@@ -1,5 +1,5 @@
 import Product from "../models/products";
-import joi, { string } from "joi";
+import joi from "joi";
 
 const productSchema = joi.object({
   name: joi.string().required(),
