@@ -11,16 +11,19 @@ export const checkPermission = async (req, res, next) => {
   }
 
   jwt.verify(token, "banThayDat", async (err, payload) => {
-    if (err === "JsonWebTokenError") {
-      return res.status(400).json({
-        message: "Token không hợp lệ",
-      });
+    if (err) {
+      if (err.name === "JsonWebTokenError") {
+        return res.status(400).json({
+          message: "Token không hợp lệ",
+        });
+      }
+      if (err.name === "TokenExpiredError") {
+        return res.status(400).json({
+          message: "Token đã hết hạn",
+        });
+      }
     }
-    if (err === "TokenExpiredError") {
-      return res.status(400).json({
-        message: "Token đã hết hạn",
-      });
-    }
+
     const user = await User.findById(payload.id);
     if (user.role !== "admin") {
       return res.status(403).json({

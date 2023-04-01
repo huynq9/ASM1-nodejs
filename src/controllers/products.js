@@ -5,6 +5,7 @@ const productSchema = joi.object({
   name: joi.string().required(),
   price: joi.number().required(),
   desc: joi.string(),
+  categoryId: joi.string(),
   status: joi.boolean(),
 });
 
