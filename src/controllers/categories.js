@@ -3,18 +3,14 @@ import Product from "../models/products";
 export const get = async (req, res) => {
   try {
     if (req.params.id) {
-      const category = await Categories.findById(req.params.id);
+      const category = await Categories.findById(req.params.id).populate(
+        "products"
+      );
       if (!category) {
         return res.status(404).json({
           message: "category not found",
         });
       }
-      const products = await Product.find({ categoryId: req.params.id });
-      return res.status(200).json({
-        message: "found",
-        ...category.toObject(),
-        products,
-      });
     }
     const categories = await Categories.find({});
     if (categories.length === 0) {

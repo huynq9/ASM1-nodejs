@@ -1,5 +1,6 @@
 import Product from "../models/products";
 import joi from "joi";
+import Categories from "../models/categories";
 
 const productSchema = joi.object({
   name: joi.string().required(),
@@ -10,9 +11,20 @@ const productSchema = joi.object({
 });
 
 export const get = async (req, res) => {
+  // /product?_page=2
+  const { _page = 1, _limit = 10, _sort = "price", _order = "asc" } = req.query;
+  const options = {
+    page: _page,
+    limit: _limit,
+    sort: {
+      [_sort]: _order === "desc" ? -1 : 1,
+    },
+  };
   try {
     if (req.params.id) {
-      const product = await Product.findById(req.params.id);
+      const product = await Product.findById(req.params.id).populate(
+        "categoryId"
+      );
       if (!product) {
         return res.status(404).json({
           message: "Product not found",
@@ -23,15 +35,16 @@ export const get = async (req, res) => {
         data: product,
       });
     }
-    const product = await Product.find({});
-    if (product.length === 0) {
+
+    const { docs: products } = await Product.paginate({}, options);
+    if (products.length === 0) {
       return res.status(404).json({
         message: "Product not found",
       });
     }
     return res.status(200).json({
       message: "Product found",
-      data: product,
+      data: products,
     });
   } catch (error) {
     return res.status(500).json({
@@ -53,6 +66,11 @@ export const create = async (req, res) => {
         message: "Không thể tạo sản phẩm",
       });
     }
+    await Categories.findByIdAndUpdate(product.categoryId, {
+      $addToSet: {
+        products: product._id,
+      },
+    });
     return res.status(200).json({
       message: "Tạo sản phẩm thành công",
       data: product,
