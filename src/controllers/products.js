@@ -5,6 +5,7 @@ import Categories from "../models/categories";
 const productSchema = joi.object({
   name: joi.string().required(),
   price: joi.number().required(),
+  image: joi.string().required(),
   original_price: joi.number().required(),
   properties: joi.string().required(),
   desc: joi.string().required(),
@@ -15,14 +16,19 @@ const productSchema = joi.object({
 export const get = async (req, res) => {
   // /product?_page=2
   const {
-    _page = 1,
-    _limit = 10,
+    _page = "",
+    _limit = "",
+    _totalPage = "",
     _sort = "price",
     _order = "desc",
+    _meta = true,
   } = req.query;
+
   const options = {
     page: _page,
+    meta: _meta,
     limit: _limit,
+    totalPage: _totalPage,
     sort: {
       [_sort]: _order === "desc" ? -1 : 1,
     },
@@ -43,7 +49,29 @@ export const get = async (req, res) => {
       });
     }
     // const products = await Product.find();
-    const { docs: products } = await Product.paginate({}, options);
+    const {
+      docs: products,
+      total,
+      limit,
+      page,
+      pages,
+      offset,
+      totalDocs,
+      nextPage,
+      prevPage,
+    } = await Product.paginate({}, options);
+    const totalPage = Math.ceil(totalDocs / limit);
+    console.log(totalPage);
+    const meta = {
+      totalPage, // Tổng số kết quả
+      limit, // Số kết quả trên mỗi trang
+      page, // Trang hiện tại
+      pages,
+      offset,
+      totalDocs,
+      nextPage,
+      prevPage, // Tổng số trang
+    };
     if (products.length === 0) {
       return res.status(404).json({
         message: "Product not found",
@@ -51,7 +79,7 @@ export const get = async (req, res) => {
     }
     return res.status(200).json({
       message: "Product found",
-      data: products,
+      data: { products, meta },
     });
   } catch (error) {
     return res.status(500).json({
