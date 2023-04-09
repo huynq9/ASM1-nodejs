@@ -5,14 +5,21 @@ import Categories from "../models/categories";
 const productSchema = joi.object({
   name: joi.string().required(),
   price: joi.number().required(),
-  desc: joi.string(),
+  original_price: joi.number().required(),
+  properties: joi.string().required(),
+  desc: joi.string().required(),
   categoryId: joi.string(),
   status: joi.boolean(),
 });
 
 export const get = async (req, res) => {
   // /product?_page=2
-  const { _page = 1, _limit = 10, _sort = "price", _order = "asc" } = req.query;
+  const {
+    _page = 1,
+    _limit = 10,
+    _sort = "price",
+    _order = "desc",
+  } = req.query;
   const options = {
     page: _page,
     limit: _limit,
@@ -35,7 +42,7 @@ export const get = async (req, res) => {
         data: product,
       });
     }
-
+    // const products = await Product.find();
     const { docs: products } = await Product.paginate({}, options);
     if (products.length === 0) {
       return res.status(404).json({
